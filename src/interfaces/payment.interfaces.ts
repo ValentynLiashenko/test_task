@@ -13,3 +13,8 @@ export enum PaymentStatus {
   Completed = 'completed',
   Paid = 'paid',
 }
+
+export interface IHandlePayPaymentReturn {
+  id: string;
+  amount: number;
+}

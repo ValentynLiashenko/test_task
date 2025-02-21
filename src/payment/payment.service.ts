@@ -1,8 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PaymentConfigService } from '../payment-config/payment-config.service';
 import { ShopsService } from '../shops/shops.service';
 import { PaymentsModel } from '../models';
-import { PaymentStatus } from '../interfaces';
+import {
+  IHandlePayPaymentReturn,
+  IPayment,
+  PaymentStatus,
+} from '../interfaces';
 
 @Injectable()
 export class PaymentsService {
@@ -36,7 +40,7 @@ export class PaymentsService {
       shopId,
       PaymentStatus.Completed
     );
-    const totalAvailable = payments.reduce(
+    const totalAvailable: number = payments.reduce(
       (sum, payment) => sum + payment.availableAmount,
       0
     );
@@ -45,8 +49,24 @@ export class PaymentsService {
       return { totalPaid: 0, payments: [] };
     }
 
-    const paidPayments = [];
+    const paidPayments = await this.handlePayPayments(
+      totalAvailable,
+      payments,
+      shopId
+    );
+    return {
+      totalPaid: paidPayments.reduce((sum, p) => sum + p.amount, 0),
+      payments: paidPayments,
+    };
+  }
+
+  async handlePayPayments(
+    totalAvailable: number,
+    payments: IPayment[],
+    shopId: string
+  ): Promise<IHandlePayPaymentReturn[]> {
     let balance = totalAvailable;
+    const paidPayments = [];
     for (const payment of payments) {
       if (balance >= payment.availableAmount) {
         balance -= payment.availableAmount;
@@ -55,11 +75,6 @@ export class PaymentsService {
         this.shopsService.updateBalance(shopId, payment.availableAmount);
       }
     }
-    return {
-      totalPaid: paidPayments.reduce((sum, p) => sum + p.amount, 0),
-      payments: paidPayments,
-    };
+    return paidPayments;
   }
-
-  async handlePayment() {}
 }
