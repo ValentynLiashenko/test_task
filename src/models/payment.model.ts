@@ -38,7 +38,10 @@ export class PaymentsModel {
     return paymentIds;
   }
 
-  async getPaymentsByShop(shopId: string, status: PaymentStatus) {
+  async getPaymentsByShop(
+    shopId: string,
+    status: PaymentStatus
+  ): Promise<IPayment[]> {
     return [...this.payments.values()].filter(
       (payment) => payment.shopId === shopId && payment.status === status
     );
